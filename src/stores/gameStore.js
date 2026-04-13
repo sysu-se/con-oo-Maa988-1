@@ -20,6 +20,7 @@ export function createGameStore(options = {}) {
   let game = null
   let sudoku = null
 
+  // writable stores：可变状态
   const gamePaused = writable(true)
   const gameWon = writable(false)
   const canUndo = writable(false)
@@ -34,6 +35,7 @@ export function createGameStore(options = {}) {
   const timerRunning = writable(false)
   const hints = writable(Infinity)
 
+  // derived stores：从 userGrid 派生 invalidCells
   const derivedInvalidCells = derived(userGrid, $userGrid => {
     return calculateInvalidCells($userGrid)
   })
@@ -42,6 +44,7 @@ export function createGameStore(options = {}) {
     invalidCells.set($invalid)
   })
 
+  // 派生 gameWon 状态
   const derivedGameWon = derived(
     [userGrid, invalidCells],
     ([$userGrid, $invalidCells]) => {
@@ -167,6 +170,7 @@ export function createGameStore(options = {}) {
     hints.update(h => h - 1)
   }
 
+  // 同步领域对象状态到 UI stores
   function syncGameState() {
     if (!game) return
 
@@ -191,10 +195,8 @@ export function createGameStore(options = {}) {
     // TODO: 实现反序列化
   }
 
-  // ========== 返回 Store 对象 ==========
-
+  // 返回 Store 对象：响应式状态（UI 可订阅）
   return {
-    // 响应式状态（UI 可以订阅）
     grid,
     userGrid,
     invalidCells,
@@ -206,8 +208,8 @@ export function createGameStore(options = {}) {
     timer,
     timerRunning,
     hints,
-    
-    // 方法（UI 可以调用）
+
+    // 方法（UI 可调用）
     startNew,
     startCustom,
     guess,
@@ -218,8 +220,8 @@ export function createGameStore(options = {}) {
     applyHint,
     toJSON,
     fromJSON,
-    
-    // 内部方法（用于调试）
+
+    // 调试用
     getGame: () => game,
     getSudoku: () => sudoku
   }
