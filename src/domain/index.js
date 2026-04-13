@@ -32,6 +32,15 @@ export function createSudoku(input) {
      */
     guess(move) {
       const { row, col, value } = move
+      
+      // 验证参数边界
+      if (row < 0 || row >= 9 || col < 0 || col >= 9) {
+        throw new Error(`Invalid position: row=${row}, col=${col}`)
+      }
+      if (value < 0 || value > 9) {
+        throw new Error(`Invalid value: ${value}`)
+      }
+      
       grid[row][col] = value
     },
 
@@ -112,10 +121,11 @@ export function createGame({ sudoku, undoStack = [], redoStack = [] }) {
 
   return {
     /**
-     * 获取当前的 Sudoku 对象
+     * 获取当前的 Sudoku 对象的副本
+     * 返回克隆，防止外部修改内部状态
      */
     getSudoku() {
-      return currentSudoku
+      return currentSudoku.clone()
     },
 
     /**

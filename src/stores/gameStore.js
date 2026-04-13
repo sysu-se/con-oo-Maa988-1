@@ -243,10 +243,10 @@ export function createGameStore(options = {}) {
    */
   function syncGameState() {
     if (!game) return
-    
-    const sudokuState = game.getSudoku()
-    const currentGrid = sudokuState.getGrid()
-    
+
+    // 获取内部 sudoku 的 grid 副本
+    const currentGrid = game.getSudoku().getGrid()
+
     // 同步 userGrid
     userGrid.set(currentGrid)
   }
