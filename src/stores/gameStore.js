@@ -37,11 +37,13 @@ export function createGameStore(options = {}) {
   let sudoku = null
 
   // ========== 响应式状态（writable stores） ==========
-  
+
   // 游戏状态
   const gamePaused = writable(true)
   const gameWon = writable(false)
-  
+  const canUndo = writable(false)
+  const canRedo = writable(false)
+
   // Grid 数据（从领域对象派生）
   const grid = writable(createEmptyGrid())
   const userGrid = writable(createEmptyGrid())
@@ -249,6 +251,10 @@ export function createGameStore(options = {}) {
 
     // 同步 userGrid
     userGrid.set(currentGrid)
+    
+    // 同步 undo/redo 状态
+    canUndo.set(game.canUndo())
+    canRedo.set(game.canRedo())
   }
 
   /**
@@ -267,7 +273,7 @@ export function createGameStore(options = {}) {
   }
 
   // ========== 返回 Store 对象 ==========
-  
+
   return {
     // 响应式状态（UI 可以订阅）
     grid,
@@ -275,6 +281,8 @@ export function createGameStore(options = {}) {
     invalidCells,
     gamePaused,
     gameWon,
+    canUndo,
+    canRedo,
     difficulty,
     timer,
     timerRunning,

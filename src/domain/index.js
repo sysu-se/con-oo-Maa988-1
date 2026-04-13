@@ -12,11 +12,27 @@ function cloneGrid(grid) {
 /**
  * 创建 Sudoku 对象
  * @param {number[][]} input - 9x9 的数独网格，0 表示空单元格
+ * @param {Set<string>} [givens] - 题目给定的格子位置集合（可选）
  * @returns {Sudoku}
  */
-export function createSudoku(input) {
+export function createSudoku(input, givens) {
   // 防御性拷贝：创建时深拷贝输入
   let grid = cloneGrid(input)
+  
+  // 记录题目给定的格子位置（不可修改）
+  let _givens = givens || new Set()
+  
+  // 如果没有传入 givens，自动从 input 中推断（非 0 的格子）
+  if (!givens) {
+    _givens = new Set()
+    for (let i = 0; i < 9; i++) {
+      for (let j = 0; j < 9; j++) {
+        if (input[i][j] !== 0) {
+          _givens.add(`${i},${j}`)
+        }
+      }
+    }
+  }
 
   return {
     /**
@@ -24,6 +40,20 @@ export function createSudoku(input) {
      */
     getGrid() {
       return cloneGrid(grid)
+    },
+    
+    /**
+     * 获取题目给定的格子位置集合
+     */
+    getGivens() {
+      return new Set(_givens)
+    },
+    
+    /**
+     * 检查某个格子是否是题目给定的（不可修改）
+     */
+    isGiven(row, col) {
+      return _givens.has(`${row},${col}`)
     },
 
     /**
@@ -41,6 +71,11 @@ export function createSudoku(input) {
         throw new Error(`Invalid value: ${value}`)
       }
       
+      // 检查是否尝试修改题目给定的格子
+      if (_givens.has(`${row},${col}`)) {
+        throw new Error(`Cannot modify given cell at (${row}, ${col})`)
+      }
+      
       grid[row][col] = value
     },
 
@@ -55,7 +90,7 @@ export function createSudoku(input) {
      * 克隆当前 Sudoku 对象
      */
     clone() {
-      return createSudoku(grid)
+      return createSudoku(grid, new Set(_givens))
     },
 
     /**
@@ -64,7 +99,8 @@ export function createSudoku(input) {
     toJSON() {
       return {
         type: 'Sudoku',
-        grid: cloneGrid(grid)
+        grid: cloneGrid(grid),
+        givens: [..._givens]
       }
     },
 
@@ -99,7 +135,8 @@ export function createSudoku(input) {
  * 从 JSON 数据恢复 Sudoku 对象
  */
 export function createSudokuFromJSON(json) {
-  return createSudoku(json.grid)
+  const givens = json.givens ? new Set(json.givens) : null
+  return createSudoku(json.grid, givens)
 }
 
 // ============================================================

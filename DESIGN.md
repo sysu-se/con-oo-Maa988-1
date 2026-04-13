@@ -9,17 +9,17 @@
 本方案采用 **Store Adapter 模式**，创建了一个 `gameStore` 单例对象：
 
 - `gameStore` 内部持有 `Game` 和 `Sudoku` 领域对象
-- `gameStore` 对外暴露 Svelte writable/derived stores（`grid`, `userGrid`, `gamePaused`, `gameWon` 等）
-- UI 组件通过 `$gameStore.xxx` 或直接导入派生 stores 来订阅状态
+- `gameStore` 对外暴露 Svelte writable/derived stores（`grid`, `userGrid`, `gamePaused`, `gameWon`, `canUndo`, `canRedo` 等）
+- UI 组件通过 `$store` 语法订阅状态
 - UI 组件通过调用 `gameStore.guess()`, `gameStore.undo()`, `gameStore.redo()` 等方法操作领域对象
 
 **消费链路：**
 ```
 UI 组件 (App.svelte, Board, Keyboard, Actions)
-    ↓ 订阅
-@sudoku/stores/grid.js (grid, userGrid, invalidCells)
+    ↓ 订阅 ($store)
+@sudoku/stores/grid.js, game.js (派生 stores)
     ↓ 派生自
-src/stores/gameStore.js (gameStore.grid, gameStore.userGrid, gameStore.invalidCells)
+src/stores/gameStore.js (gameStore.grid, gameStore.userGrid, etc.)
     ↓ 内部持有
 src/domain/index.js (Game 对象 → Sudoku 对象)
 ```
@@ -35,6 +35,8 @@ View 层通过 store 订阅获取以下数据：
 | `invalidCells` | `gameStore.invalidCells` | 冲突的单元格列表（用于高亮） |
 | `gamePaused` | `gameStore.gamePaused` | 游戏是否暂停 |
 | `gameWon` | `gameStore.gameWon` | 游戏是否胜利 |
+| `canUndo` | `gameStore.canUndo` | 是否可以撤销 |
+| `canRedo` | `gameStore.canRedo` | 是否可以重做 |
 | `difficulty` | `gameStore.difficulty` | 难度设置 |
 | `hints` | `gameStore.hints` | 剩余提示数 |
 
@@ -234,17 +236,20 @@ HW1 中：
 ### Sudoku 对象职责
 
 - 持有 grid 数据（内部状态）
-- 提供 `guess(move)` 方法修改局面
+- **管理 givens（题目给定的格子，不可修改）**
+- 提供 `guess(move)` 方法修改局面（**包含参数验证**）
 - 提供 `getGrid()` 方法获取副本（深拷贝）
+- 提供 `getGivens()` / `isGiven()` 方法查询题目格子
 - 提供 `clone()` 方法创建快照
 - 提供 `toJSON()` / `toString()` 外表化接口
 
 ### Game 对象职责
 
-- 持有当前 `Sudoku` 对象
-- 管理 `undoStack` 和 `redoStack`（存储 Move 历史记录）
+- 持有当前 `Sudoku` 对象（**通过 clone() 防止外部修改**）
+- 管理 `undoStack` 和 `redoStack`（存储 Move 历史记录，包含 oldValue/newValue）
 - 提供 `guess(move)`, `undo()`, `redo()` 方法
 - 提供 `canUndo()`, `canRedo()` 状态查询
+- 提供 `getSudoku()` 方法返回**克隆**（**防止绕过历史管理**）
 - 提供 `toJSON()` 序列化支持
 
 ### 复制策略
